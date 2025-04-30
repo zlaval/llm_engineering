@@ -10,7 +10,7 @@ def chat(prompt, history):
     messages = [
         {
             "role": "system",
-            "content": "You are an assistant. You response in markdown format."
+            "content": "You are an assistant. You response in markdown format. You are polite with the user.",
         },
     ]
 
