@@ -8,7 +8,6 @@ scipy
 scikit-learn
 matplotlib
 gensim
-torch
 transformers
 tqdm
 openai
@@ -42,3 +41,7 @@ setuptools
 speedtest-cli
 sentence_transformers
 feedparser
+diffusers
+#torch
+huggingface-hub
+pillow
