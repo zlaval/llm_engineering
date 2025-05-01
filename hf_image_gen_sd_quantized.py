@@ -1,7 +1,7 @@
 import gradio as gr
 import torch
 from diffusers import StableDiffusion3Pipeline, SD3Transformer2DModel
-from transformers import BitsAndBytesConfig
+from tokenizer_example import BitsAndBytesConfig
 
 if not torch.cuda.is_available():
     raise Exception("CUDA not available")
