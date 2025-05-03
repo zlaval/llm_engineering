@@ -1,9 +1,18 @@
 import os
 from datetime import timedelta
+from typing import Any
 
 import torch
 from moviepy import AudioFileClip
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, M2M100Tokenizer, \
+    M2M100ForConditionalGeneration
+
+# sometimes tokenization_whisper.py throws error: TypeError: '<=' not supported between instances of 'NoneType' and 'float'
+# update the file locally according to this pr: https://github.com/huggingface/transformers/pull/33625/files
+# then install it from local repo using `pip install /path/to/transformers`
+
+INPUT_VOICE_FILE = "assets/video.mp4"
+OUTPUT_VOICE_FILE = "assets/voice.mp3"
 
 
 def format_timestamp(seconds: float) -> str:
@@ -34,7 +43,7 @@ def create_subtitle(path, output, ts_sentences):
     writefile(srt, path, output, "srt")
 
 
-def generate_sentences(subtitles: list) -> str:
+def transform_to_ts_sentences(subtitles: list) -> list[Any]:
     result = []
     for i, entry in enumerate(subtitles, start=1):
         start_time = format_timestamp(entry["timestamp"][0])
@@ -44,42 +53,62 @@ def generate_sentences(subtitles: list) -> str:
             "start_time": start_time,
             "end_time": end_time
         })
+    return result
+
+
+def extract_audio():
+    audio = AudioFileClip(INPUT_VOICE_FILE)
+    audio.write_audiofile(OUTPUT_VOICE_FILE, codec='mp3')
+    audio.close()
+
+
+def audio_to_text():
+    model_name = "openai/whisper-large-v3-turbo"
+    model = AutoModelForSpeechSeq2Seq.from_pretrained(model_name).to("cuda")
+    processor = AutoProcessor.from_pretrained(model_name)
+
+    pipe = pipeline(
+        "automatic-speech-recognition",
+        model=model,
+        tokenizer=processor.tokenizer,
+        feature_extractor=processor.feature_extractor,
+        torch_dtype=torch.float16,
+        device="cuda",
+        return_timestamps=True,
+        chunk_length_s=20,
+        batch_size=16,
+    )
+
+    result = pipe(OUTPUT_VOICE_FILE)
+    return result
+
+
+def translate(ts_text):
+    device = "cuda"
+    model_name = "facebook/m2m100_1.2B"
+    tokenizer = M2M100Tokenizer.from_pretrained(model_name)
+    tokenizer.src_lang = "en"
+    model = M2M100ForConditionalGeneration.from_pretrained(model_name).to(device)
+
+    result = []
+    for item in ts_text:
+        text = item["line"]
+        inputs = tokenizer(text, return_tensors="pt", padding=True).to(device)
+        with torch.no_grad():
+            translated_tokens = model.generate(**inputs, forced_bos_token_id=tokenizer.get_lang_id("hu"))
+        translated_text = tokenizer.decode(translated_tokens[0], skip_special_tokens=True)
+        result.append({
+            "line": translated_text,
+            "start_time": item["start_time"],
+            "end_time": item["end_time"]
+        })
 
     return result
 
 
-# Extract speech from video
-input_voice_file = "assets/video.mp4"
-output_voice_file = "assets/voice.mp3"
-
-audio = AudioFileClip(input_voice_file)
-audio.write_audiofile(output_voice_file, codec='mp3')
-audio.close()
-
-# Extract speech to text with ts
-WHISPER_MODEL_ID = "openai/whisper-large-v3-turbo"
-model = AutoModelForSpeechSeq2Seq.from_pretrained(WHISPER_MODEL_ID).to("cuda")
-processor = AutoProcessor.from_pretrained(WHISPER_MODEL_ID)
-
-pipe = pipeline(
-    "automatic-speech-recognition",
-    model=model,
-    tokenizer=processor.tokenizer,
-    feature_extractor=processor.feature_extractor,
-    torch_dtype=torch.float16,
-    device="cuda",
-    return_timestamps=True,
-    chunk_length_s=20,
-    batch_size=16,
-)
-
-result = pipe(output_voice_file)
-
-original_lang_ts_txt = generate_sentences(result["chunks"])
+extract_audio()
+original_lang_txt = audio_to_text()
+original_lang_ts_txt = transform_to_ts_sentences(original_lang_txt["chunks"])
 create_subtitle("assets", "orig_lang.sub", original_lang_ts_txt)
-
-# sometimes tokenization_whisper.py throws error: TypeError: '<=' not supported between instances of 'NoneType' and 'float'
-# update the file locally according to this pr: https://github.com/huggingface/transformers/pull/33625/files
-# then install it from local repo using `pip install /path/to/transformers`
-# text = textwrap.fill(result["text"], width=120)
-# writefile(text, "assets", "orig_text", "text")
+translated_ts_txt = translate(original_lang_ts_txt)
+create_subtitle("assets", "translated_lang.sub", translated_ts_txt)
