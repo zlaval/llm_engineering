@@ -45,3 +45,4 @@ diffusers
 #torch
 huggingface-hub
 pillow
+moviepy

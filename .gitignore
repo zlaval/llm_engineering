@@ -2,4 +2,6 @@
 .env
 .venv/
 image.png
-audio.mp3
+*.mp3
+*.mp4
+/assets
