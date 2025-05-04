@@ -1,3 +1,5 @@
+from functools import partial
+
 from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
@@ -11,7 +13,8 @@ from openai import OpenAI
 load_dotenv()
 openai = OpenAI()
 
-loader = DirectoryLoader("rag", glob="**/*.txt", loader_cls=TextLoader)
+utf8_loader = partial(TextLoader, encoding="utf-8")
+loader = DirectoryLoader("rag", glob="**/*.txt", loader_cls=utf8_loader)
 # TextLoader("rag/sample1.txt", encoding="utf-8"))
 docs = loader.load()
 
