@@ -1,0 +1,13 @@
+Cégnév: FutureTech Solutions
+
+FutureTech Solutions egy innovatív technológiai vállalat, amely mesterséges intelligenciával, adatelemzéssel és automatizálással foglalkozik. A cég 2015-ben alakult Budapesten, és mára több mint 100 alkalmazottal rendelkezik világszerte.
+
+Szolgáltatásaink közé tartozik:
+- Egyedi AI modellek fejlesztése vállalati igényekre
+- Automatizált chatbot rendszerek
+- Prediktív analitika pénzügyi és egészségügyi szektorban
+- Adattárház építés és optimalizálás
+
+Fő partnereink közé tartozik a HealthSys, FinCore és az AutoRobotix. 2023-ban a FutureTech elnyerte a "Leginnovatívabb AI Megoldás" díjat az Európai Tech Konferencián.
+
+Kapcsolat: info@futuretech.hu
