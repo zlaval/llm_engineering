@@ -46,3 +46,7 @@ diffusers
 huggingface-hub
 pillow
 moviepy
+torch
+langchain-text-splitters
+langchain-community
+langchain-core
