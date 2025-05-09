@@ -28,7 +28,7 @@ def generate(prompt):
 
 with gr.Blocks() as ui:
     with gr.Row():
-        image = gr.Image(label="Image", height=600)
+        image = gr.Image(label="Image", height=400)
     with gr.Row():
         msg = gr.Textbox(label="Message", placeholder="Enter a message")
 
