@@ -29,7 +29,7 @@ embedding = OpenAIEmbeddings()
 # Some of the most useful algorithms are implemented on the GPU.
 # It is developed primarily at Meta's Fundamental AI Research group.
 vectorstore = FAISS.from_documents(chunks, embedding)
-retriever = vectorstore.as_retriever(search_kwargs={"k": 1})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 1}) #only most relevant doc
 
 memory = ConversationBufferMemory(
     memory_key="chat_history",
@@ -39,6 +39,8 @@ memory = ConversationBufferMemory(
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
 
+# It always sends context
+#it has memory and chat history
 chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=retriever,
