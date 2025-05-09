@@ -13,7 +13,7 @@ car_prices = {
     "ford": "32000",
     "chevrolet": "23000",
     "bmw": "41000",
-    "tesla": "39000"
+    "tesla": "39000",
 }
 
 

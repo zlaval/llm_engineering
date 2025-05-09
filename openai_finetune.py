@@ -7,7 +7,7 @@ from huggingface_hub import login
 from transformers import AutoTokenizer
 
 MODEL_NAME = "meta-llama/Llama-3.2-1B"
-MAX_TOKENS = 1000
+MAX_TOKENS = 200
 MAX_LENGTH = 5 * MAX_TOKENS
 
 load_dotenv()
@@ -81,3 +81,5 @@ for datapoint in dataset:
 
 print(f"Total items: {len(items)}")
 print(items[0])
+
+#TODO average price, balanced price distribution
