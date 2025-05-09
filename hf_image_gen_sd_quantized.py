@@ -1,7 +1,7 @@
 import gradio as gr
 import torch
 from diffusers import StableDiffusion3Pipeline, SD3Transformer2DModel
-from tokenizer_example import BitsAndBytesConfig
+from transformers import BitsAndBytesConfig
 
 if not torch.cuda.is_available():
     raise Exception("CUDA not available")
@@ -39,7 +39,7 @@ def generate(prompt):
 
 with gr.Blocks() as ui:
     with gr.Row():
-        image_panel = gr.Image(label="Image", height=600)
+        image_panel = gr.Image(label="Image", height=500)
     with gr.Row():
         msg = gr.Textbox(label="Message", placeholder="Enter a message")
     msg.submit(fn=generate, inputs=msg, outputs=image_panel)

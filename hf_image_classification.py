@@ -17,7 +17,7 @@ with gr.Blocks() as ui:
     with gr.Row(equal_height=True):
         with gr.Column():
             image_input = gr.Image(type="pil", label="Upload Image")
-        with gr.Column(elem_classes="center"):
+        with gr.Column():
             with gr.Row():
                 classify_btn = gr.Button("Classify")
         with gr.Column():
