@@ -1,12 +1,13 @@
-import json
 import os
 from collections import defaultdict
 from typing import Optional
 
-#import matplotlib.pyplot as plt
+import numpy as np
+# import matplotlib.pyplot as plt
 from datasets import load_dataset
 from dotenv import load_dotenv
 from huggingface_hub import login
+from matplotlib import pyplot as plt
 from transformers import AutoTokenizer
 
 MODEL_NAME = "meta-llama/Llama-3.2-1B"
@@ -31,24 +32,26 @@ dataset = load_dataset(
 dataset = dataset.filter(lambda x: x["price"] not in ["None", "", None])
 
 example_datapoint = dataset[0]
-#print(f"Datapoints number: {len(dataset)}")
-#print(json.dumps(example_datapoint, indent=4))
-#print("Details")
 
-#print(example_datapoint['title'])
-#print(example_datapoint['price'])
-#print(example_datapoint['details'])
-#print(example_datapoint['features'])
 
-#prices = [round(float(datapoint["price"])) for datapoint in dataset]
+# print(f"Datapoints number: {len(dataset)}")
+# print(json.dumps(example_datapoint, indent=4))
+# print("Details")
+
+# print(example_datapoint['title'])
+# print(example_datapoint['price'])
+# print(example_datapoint['details'])
+# print(example_datapoint['features'])
+
+# prices = [round(float(datapoint["price"])) for datapoint in dataset]
 
 ## Too much cheap items (avg/mean) not good training data,
-#plt.figure(figsize=(15, 6))
-#plt.title("Prices")
-#plt.xlabel("Price")
-#plt.ylabel("Count")
-#plt.hist(prices, rwidth=0.7, bins=range(0, 1000, 10))
-#plt.show()
+# plt.figure(figsize=(15, 6))
+# plt.title("Prices")
+# plt.xlabel("Price")
+# plt.ylabel("Count")
+# plt.hist(prices, rwidth=0.7, bins=range(0, 1000, 10))
+# plt.show()
 
 
 ## dataset = dataset.select(range(30000)).filter(lambda x: x["price"] not in ["None", "", None]).select(range(2000))
@@ -58,7 +61,7 @@ class Item:
     title: str
     price: float
     category: str
-    description: str
+    description: str = ""
 
     prompt = Optional[str]
     test_prompt = Optional[str]
@@ -91,11 +94,12 @@ class Item:
             content = content[:MAX_LENGTH]
             # We should cleanup the content
             content = f"{self.title}\n{content}"
+            self.description = content
             tokens = self.tokenizer.encode(content, add_special_tokens=False)
             tokens = tokens[:MAX_TOKENS]
             text = self.tokenizer.decode(tokens)
             self.prompt = f"How much does this product costs: {text}\n"
-            self.test_prompt=self.prompt
+            self.test_prompt = self.prompt
             self.test_prompt += f"Price is _ $"
             self.prompt += f"Price is {str(self.price)} $"
             self.token_count = len(self.tokenizer.encode(self.prompt, add_special_tokens=False))
@@ -116,15 +120,37 @@ for datapoint in dataset:
 print(f"Total items: {len(items)}")
 print(items[0])
 
-#Key is the rounded price and value is a list of items has that price
+# Key is the rounded price and value is a list of items has that price
 slots = defaultdict(list)
 for item in items:
     slots[round(item.price)].append(item)
 
-#Create balanced sample from the data
+# Create a balanced sample from the data
+sample = []
+for i in range(MIN_PRICE, MAX_PRICE):
+    slot = slots[i]
+    # as we have just a few item worth more than 200, we take those all
+    if i >= 200:
+        sample.extend(slot)
+    # also take all when there are less than 1000 elements for a given price
+    elif len(slot) < 100:
+        sample.extend(slot)
+    else:
+        weights = np.array([2 if len(item.description) > 100 else 1 for item in slot])
+        weights = weights / np.sum(weights)
+        # select 1000 elements randomly from a slot, longer text bigger probability (return indices)
+        si = np.random.choice(len(slot), size=100, replace=False, p=weights)
+        s = [slot[j] for j in si]
+        sample.extend(s)
 
+print(f"number of samples: {len(sample)}")
 
-
-
+prices = [round(float(item.price)) for item in sample]
+plt.figure(figsize=(15, 6))
+plt.title("Prices")
+plt.xlabel("Price")
+plt.ylabel("Count")
+plt.hist(prices, rwidth=0.7, bins=range(0, 1000, 10))
+plt.show()
 
 # TODO average price, balanced price distribution
