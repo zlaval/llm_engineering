@@ -1,8 +1,10 @@
 import math
 import os
 import random
+import re
 
 from matplotlib import pyplot as plt
+from openai import OpenAI
 
 from item import Item
 
@@ -34,7 +36,7 @@ with open('assets/test.pkl', 'rb') as file:
 
 class Tester:
 
-    def __init__(self, predictor, data, title=None, size=250):
+    def __init__(self, predictor, data, title=None, size=25):
         self.predictor = predictor
         self.data = data
         self.title = title or predictor.__name__.replace("_", " ").title()
@@ -105,8 +107,40 @@ class Tester:
 random.seed(42)
 
 
-def random_price(item):
-    return random.randrange(1, 1000)
+# def random_price(item):
+#    return random.randrange(1, 1000)
 
 
-Tester.test(random_price,test)
+def gpt_message(item):
+    system_prompt = "You must estimate the price of items. Reply only with price as a plain number. No explanation."
+    user_prompt = item.test_prompt
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+        {"role": "assistant", "content": "Price is $"},
+    ]
+
+
+openai = OpenAI()
+
+
+def extract_price(s):
+    s = s.replace('$', '').replace(',', '')
+    match = re.search(r"[-+]?\d*\.\d+|\d+", s)
+    return float(match.group()) if match else 0
+
+
+def gpt_price(item):
+    response = openai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=gpt_message(item),
+        seed=42,
+        max_tokens=5
+    )
+    reply = response.choices[0].message.content
+    return extract_price(reply)
+
+
+# = gpt_price(test[0])
+# print(res)
+Tester.test(gpt_price, test[:30])
