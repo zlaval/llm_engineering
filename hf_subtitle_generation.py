@@ -1,9 +1,12 @@
 import os
+import textwrap
 from datetime import timedelta
 from typing import Any
 
 import torch
+from dotenv import load_dotenv
 from moviepy import AudioFileClip
+from openai import OpenAI
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, M2M100Tokenizer, \
     M2M100ForConditionalGeneration
 
@@ -13,6 +16,19 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, M2M
 
 INPUT_VOICE_FILE = "assets/video.mp4"
 OUTPUT_VOICE_FILE = "assets/voice.mp3"
+LANG_FROM = "English"
+LANG_TO = "Hungarian"
+
+SYSTEM_PROMPT = """You are a subtitle translator. 
+            The user will provide subtitle text in {0} language that includes timestamps. 
+            Your task is to translate only the text into {1} language, 
+            while preserving the exact formatting and timestamps as they are. Do not change, remove, 
+            or add any timestamps, and do not alter the original structure of the subtitle file. 
+            Return the translated subtitles in the exact same format as the input, 
+            with only the content translated.""".format(LANG_FROM, LANG_TO)
+
+load_dotenv()
+openai = OpenAI()
 
 
 def format_timestamp(seconds: float) -> str:
@@ -41,6 +57,7 @@ def create_subtitle(path, output, ts_sentences):
         srt_output.append(f"{i}\n{start_time} --> {end_time}\n{line}\n")
     srt = "\n".join(srt_output)
     writefile(srt, path, output, "srt")
+    return srt
 
 
 def transform_to_ts_sentences(subtitles: list) -> list[Any]:
@@ -106,9 +123,41 @@ def translate(ts_text):
     return result
 
 
+def translate2(ts_text):
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT,
+        },
+        {
+            "role": "user",
+            "content": ts_text
+        }
+    ]
+
+    print("send to opanai")
+    response = openai.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        temperature=0.7,
+    )
+    print("get openai response")
+
+    return response.choices[0].message.content
+
+
 extract_audio()
 original_lang_txt = audio_to_text()
+
+text = textwrap.fill(original_lang_txt["text"], width=120)
+writefile(text, "assets", "rawtext", "txt")
+
 original_lang_ts_txt = transform_to_ts_sentences(original_lang_txt["chunks"])
-create_subtitle("assets", "orig_lang.sub", original_lang_ts_txt)
-translated_ts_txt = translate(original_lang_ts_txt)
-create_subtitle("assets", "translated_lang.sub", translated_ts_txt)
+orig_srt=create_subtitle("assets", "orig_lang.sub", original_lang_ts_txt)
+
+print("end")
+#translated_ts_txt = translate2(orig_srt)
+#writefile(translated_ts_txt, "assets", "translated_lang", "sub")
+
+#translated_ts_txt = translate(original_lang_ts_txt)
+#create_subtitle("assets", "translated_lang.sub", translated_ts_txt)

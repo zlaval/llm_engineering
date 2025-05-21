@@ -143,4 +143,7 @@ def gpt_price(item):
 
 # = gpt_price(test[0])
 # print(res)
-Tester.test(gpt_price, test[:30])
+#Tester.test(gpt_price, test[:30])
+
+
+#https://platform.openai.com/docs/guides/supervised-fine-tuning
