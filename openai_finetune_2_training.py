@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import random
@@ -147,3 +148,54 @@ def gpt_price(item):
 
 
 #https://platform.openai.com/docs/guides/supervised-fine-tuning
+
+oai_train = train[:200]
+oai_train_validation = train[200:220]
+
+def messages_for(item):
+    system_message = "You estimate prices of items. Reply only with the price, no explanation"
+    user_prompt = item.test_prompt()
+    return [
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_prompt},
+        {"role": "assistant", "content": f"Price is ${item.price:.2f}"}
+    ]
+
+def make_jsonl(items):
+    result = ""
+    for item in items:
+        messages = messages_for(item)
+        messages_str = json.dumps(messages)
+        result += '{"messages": ' + messages_str +'}\n'
+    return result.strip()
+
+def write_jsonl(items, filename):
+    with open(filename, "w") as f:
+        jsonl = make_jsonl(items)
+        f.write(jsonl)
+
+write_jsonl(oai_train, "oai_train.jsonl")
+write_jsonl(oai_train_validation, "oai_train_validation.jsonl")
+
+
+#with open("oai_train.jsonl", "rb") as f:
+#    train_file = openai.files.create(file=f, purpose="fine-tune")
+#    print(train_file)
+#with open("oai_train_validation.jsonl", "rb") as f:
+#    validation_file = openai.files.create(file=f, purpose="fine-tune")
+
+
+###wandb.ai
+
+# wandb_integration = {"type": "wandb", "wandb": {"project": "gpt-pricer"}}
+#
+# openai.fine_tuning.jobs.create(
+#     training_file=train_file.id,
+#     validation_file=validation_file.id,
+#     model="gpt-4o-mini-2024-07-18",
+#     seed=42,
+#     hyperparameters={"n_epochs": 1}, #optional, how many times go through the data we have provided
+#     integrations = [wandb_integration],
+#     suffix="price"
+# )
+# openai.fine_tuning.jobs.list(limit=1)
