@@ -52,3 +52,4 @@ langchain-community
 langchain-core
 libmagic
 datasets
+peft
