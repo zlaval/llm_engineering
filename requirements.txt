@@ -53,3 +53,5 @@ langchain-core
 libmagic
 datasets
 peft
+trl
+ftfy
