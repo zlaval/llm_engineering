@@ -7,18 +7,8 @@ from chatterbox.tts import ChatterboxTTS
 from pydub import AudioSegment
 
 raw_text = """
-Three men are shipwrecked on an island infested with cannibals. <0.5>
-They were brought to the cannibal king, who tells the three men that they must complete a series of tests, so that they will not be eaten. <0.6>
-The first task, he tells them to bring back 10 pieces of the same fruit. <0.2>
-So they go out to scavenger the island. <0.3>
-The first man brings back apples and is told for the next task, <0.2>
-he must shove all 10 up his butt, without a noise or emotion. <0.5>
-He gets one and a half up there, before he screams, and gets killed and eaten. <0.5>
-The second man comes back with 10 berries, and told of the same task. <0.1>
-As he is about to get the 10th, and final berry in, he bursts out in laughter, and gets killed and eaten. <0.3>
-Up in heaven, the first man meets the second man, and asked why he laughed, since he was so close to freedom. <0.2>
-He replied, <0.1> 
-"I couldn't help it, I saw the other guy walk in with pineapples!"
+Why did the scarecrow win a Nobel Peace Prize? <0.7>
+Because he was out standing in his field
 """
 
 
@@ -58,12 +48,13 @@ for idx, (segment_text, pause_sec) in enumerate(segments):
     # Emeld min_p, ha zavaró a túl sok random hang.
     wav = model.generate(
         segment_text,
-        #audio_prompt_path=audio_prompt_wav_path,
-        exaggeration=0.7,
-        temperature=0.8,
-        cfg_weight=0.7,
-        min_p=0.04,
-        top_p=0.9,
+        audio_prompt_path=audio_prompt_wav_path,
+        exaggeration=0.8,
+        temperature=1.4,
+        cfg_weight=0.4,
+
+        min_p=0.05,
+        top_p=1.0,
         repetition_penalty=1.2,
     )
 
@@ -83,7 +74,7 @@ audio.export("voices/result.mp3", format="mp3")
 
 sound = AudioSegment.from_wav(temp_wav_path)
 slower = sound._spawn(sound.raw_data, overrides={
-    "frame_rate": int(sound.frame_rate * 0.95)
+    "frame_rate": int(sound.frame_rate * 0.98)
 }).set_frame_rate(sound.frame_rate)
 
 temp_wav_slower_path = "voices/output_slow.wav"
